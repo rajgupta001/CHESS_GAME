@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 from flask_socketio import SocketIO, emit
 from flask_sqlalchemy import SQLAlchemy
@@ -32,21 +31,22 @@ def login():
         db.session.commit()
     return jsonify({'id': player.id, 'username': player.username})
 
+
 @app.route('/start_game', methods=['POST'])
 def start_game():
     data = request.json
-    player1_id = data['player1_id']
-    player2_id = data['player2_id']
-    initial_state = "startpos"  # FEN notation for the initial state of a chess game
+    player1_id = data.get('player1_id')
+    player2_id = data.get('player2_id')
+    
+    if player1_id is None or player2_id is None:
+        return jsonify({'error': 'Player IDs are required.'}), 400
+
+    
+    initial_state = "startpos"
+    
     game = Game(state=initial_state, player1_id=player1_id, player2_id=player2_id)
     db.session.add(game)
     db.session.commit()
-    
-    # Fetch the initial state of the game
-    game_state = game.state
-    
-    # Emit the initial state to both players
-    emit('game_state', {'game_id': game.id, 'state': game_state}, broadcast=True)
     
     return jsonify({'game_id': game.id, 'state': game.state})
 
@@ -62,7 +62,8 @@ def handle_move(data):
     emit('move', {'game_id': game_id, 'state': new_state}, broadcast=True)
 
 def update_game_state(current_state, move):
-    #  Implementing the chess logic is complex and would require a chess engine
+    # This function should update the game state according to the rules of chess
+    # Implementing the chess logic is complex and would require a chess engine
     pass
 
 if __name__ == '__main__':
